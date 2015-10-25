@@ -8,7 +8,9 @@ import java.util.Random;
 
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
+import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.params.DefaultParamInitializer;
 import org.deeplearning4j.optimize.api.IterationListener;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -37,6 +39,7 @@ public class Entrenamiento1 {
 
 		Nd4j.ENFORCE_NUMERICAL_STABILITY = true;
 
+		//MultiLayerNetwork model = new MultiLayerNetwork(Redes.getConfiguration1());
 		MultiLayerNetwork model = new MultiLayerNetwork(Redes.getConfiguration1());
 		model.init();
 		LOG.info("Configuración del modelo:");
@@ -51,8 +54,6 @@ public class Entrenamiento1 {
 		}
 
 		LOG.info("\n******* ENTRENANDO RED *******\n");
-
-
 		while (dataSetIterator.hasNext()) {
 			model.setListeners(Arrays.asList((IterationListener) new ScoreIterationListener(Utileria.LISTENER_FREQ)));
 			cifarDataSet = dataSetIterator.next();
@@ -61,11 +62,11 @@ public class Entrenamiento1 {
 			testInput.add(trainAndTest.getTest().getFeatureMatrix());
 			testLabels.add(trainAndTest.getTest().getLabels());
 			model.fit(trainInput);
+			
 		}
 
 		LOG.info("\n\n******* EVALUANDO RED *******\n");
 		Evaluation eval = new Evaluation(Utileria.ETIQUETAS.size());
-		
 		for (int i = 0; i < testInput.size(); i++) {
 			INDArray output = model.output(testInput.get(i));
 			eval.eval(testLabels.get(i), output);
@@ -73,4 +74,29 @@ public class Entrenamiento1 {
 		}
 	}
 
+	
+	
+	public static void imprimirLoteIMG(DataSetIterator set){
+		while(set.hasNext()){
+			DataSet datS = set.next();
+			List<DataSet> lista = datS.asList();
+			System.out.println("Tamanio lista:" + lista.size());
+			for (DataSet ds : lista){
+					List<DataSet> listaDS = ds.get(0).asList();
+					System.out.println("Tamanio " + listaDS.size());
+					System.out.println(listaDS);
+			}
+		}
+	} 
+	
+	
+	public static void imprimirPesosCapa(MultiLayerNetwork modelo){
+		LOG.info("Mostrando pesos de la red...");
+		for(Layer capa : modelo.getLayers()){
+			INDArray pesos = capa.getParam(DefaultParamInitializer.WEIGHT_KEY);
+			LOG.info("PESOS DE LA CAPA " + capa.getIndex() + ": \n" + pesos);
+		}
+	}
+	
+	
 }

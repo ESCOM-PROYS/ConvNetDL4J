@@ -67,13 +67,13 @@ public class Utileria {
 			LOG.info("Separador de archuvos: "+SEP);
 			DIR_IMGS_ENTR = HOME_DIR
 					+ SEP
-					+ getStringPropiedad("NOM_DIRECTPRIO_ENTRENAMIENTO")
+					+ getStringPropiedad("NOM_DIRECTORIO_ENTRENAMIENTO")
 					+ SEP
 					+ getStringPropiedad("NOM_DIRECTORIO_IMGS_ENTRENAMIENTO");
 			LOG.info("Path del directorio de imagenes de entrenamiento: "+DIR_IMGS_ENTR);
 			DIR_LABELS = HOME_DIR
 					+ SEP
-					+ getStringPropiedad("NOM_DIRECTPRIO_ENTRENAMIENTO")
+					+ getStringPropiedad("NOM_DIRECTORIO_ENTRENAMIENTO")
 					+ SEP
 					+ getStringPropiedad("NOM_ARCHIVO_ETIQUETAS");
 			LOG.info("Path del archivo con las etiquetas: "+DIR_LABELS);
