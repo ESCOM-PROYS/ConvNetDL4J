@@ -1,8 +1,10 @@
 package com.escom.UTIL;
 
 import java.awt.FileDialog;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -13,9 +15,15 @@ import java.util.ResourceBundle;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.FileChooserUI;
 
 import org.apache.commons.io.FileUtils;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 public class Utileria {
@@ -39,7 +47,7 @@ public class Utileria {
 	
 	public static String HOME_DIR;		//Directorio Home del del usuario
 	public static String SEP;			//Caracter de separacion del sistema (/ = Linux, \\ = Windows, etc..)
-	public static String DIR_IMGS_ENTR;		//Path del directorio de imagens
+	public static String DIR_IMGS_ENTR;	//Path del directorio de imagens
 	public static String DIR_LABELS;	//Path del archivo que contiene los labels
 	/**
 	 * Objeto para obeter las propiedades del archivo cfg.properties 
@@ -145,22 +153,86 @@ public class Utileria {
 	public static void guardarRedNeuronal(MultiLayerNetwork model) throws IOException{
 		DataOutputStream dos = null;
 		OutputStream fos= null;
+	
 		JFileChooser jfc= new JFileChooser();
-		JFrame jf = new JFrame();
+		FileFilter filtroArquitecturaCNN = new FileNameExtensionFilter("Arquitectua de la Red Neuronal (.json)",  "json");
+		FileFilter filtroPesosCNN = new FileNameExtensionFilter("Pesos de la Red Neuronal (.bin)", "bin");
+		jfc.setAcceptAllFileFilterUsed(false);
+		jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		jfc.setMultiSelectionEnabled(false);
+		
+		int opcionElegidaFC = JFileChooser.CANCEL_OPTION;
+		int opcionElegidaJP;
+		
+		String archivoElegido;
+		
 		try{
-			LOG.info("Guardando los pesos de las redes neuronales...");
-			jfc.showOpenDialog(jf);
-			fos = Files.newOutputStream(Paths.get("coefficients.bin"));
-		    dos = new DataOutputStream(fos);
-		    dos.flush();
-		    Nd4j.write(model.params(), dos);
-		    LOG.info("Guardando los pesos de las redes neuronales <ok>");
+			LOG.info("Guardando los pesos de la red neuronal...");
+			jfc.setFileFilter(filtroPesosCNN);
+			
+			while(opcionElegidaFC == JFileChooser.CANCEL_OPTION){
+				opcionElegidaFC = jfc.showSaveDialog(null);
+				
+				if(opcionElegidaFC == JFileChooser.CANCEL_OPTION){
+					opcionElegidaJP = JOptionPane.showConfirmDialog(null, 
+							"Estas seguro que no quieres guardar los pesos de la red neuronal",
+							"",
+		    				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					
+					if(opcionElegidaJP == JOptionPane.YES_OPTION)
+						break;
+					
+				}else{
+					archivoElegido = jfc.getSelectedFile().getAbsolutePath();
+					if((archivoElegido=validarArchivoAlGuardar(archivoElegido, ".bin"))==null){
+						opcionElegidaFC = JFileChooser.CANCEL_OPTION;
+						continue;
+					}
+					
+					fos = Files.newOutputStream(Paths.get(archivoElegido));
+				    dos = new DataOutputStream(fos);
+				    dos.flush();
+				    Nd4j.write(model.params(), dos);
+				}
+			}
+		    LOG.info("Guardando los pesos de la red neuronal <ok>");
+		    
 		    LOG.info("Guardando la arquitectura de la red neuronal...");
-		    FileUtils.write(new File("conf.json"), model.getLayerWiseConfigurations().toJson());
+		    opcionElegidaFC = JFileChooser.CANCEL_OPTION;
+		    jfc.setFileFilter(filtroArquitecturaCNN);
+		    
+		    while(opcionElegidaFC == JFileChooser.CANCEL_OPTION){
+		    	opcionElegidaFC = jfc.showSaveDialog(null);
+		    	
+		    	if(opcionElegidaFC == JFileChooser.CANCEL_OPTION){
+		    		opcionElegidaJP = JOptionPane.showConfirmDialog(null,
+		    				"Estas seguro que no quieres guardar la arquitectura de la red neuronal",
+		    				"",
+		    				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+		    		
+		    		if(opcionElegidaJP == JOptionPane.YES_OPTION)
+						break;
+		    		
+		    	}else{
+		    		archivoElegido = jfc.getSelectedFile().getAbsolutePath();
+					if((archivoElegido=validarArchivoAlGuardar(archivoElegido, ".json")) == null){
+						opcionElegidaFC = JFileChooser.CANCEL_OPTION;
+						continue;
+					}
+						
+					
+		    		FileUtils.write(new File(archivoElegido),
+		    				model.getLayerWiseConfigurations().toJson());
+		    	}
+		    }
 		    LOG.info("Guardando la arquitectura de la red neuronal <ok>");
+		    
 		}catch(IOException ioe){
-			LOG.error("Error al guardar la configuración de la red neuronal: "+ioe.getMessage());
+			LOG.error("Error al guardar la configuracion de la red neuronal: "+ioe.getMessage());
 			throw ioe;
+		}catch(Exception e){
+			LOG.error("Error inesperado al guardar la red neuronal: "+e.getMessage());
+			throw e;
 		}
 		finally{
 			try{
@@ -175,20 +247,87 @@ public class Utileria {
 				e.printStackTrace();
 			}
 		}
-	    
-//	    MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
-//	    DataInputStream dis = new DataInputStream(new FileInputStream("coefficients.bin"));
-//	    INDArray newParams = Nd4j.read(dis);
-//	    dis.close();
-//	    MultiLayerNetwork savedNetwork = new MultiLayerNetwork(confFromJson);
-//	    savedNetwork.init();
-//	    savedNetwork.setParameters(newParams);
-//	    System.out.println("Original network params " + model.params());
-//	    System.out.println(savedNetwork.params());
 	}
 	
-	public static MultiLayerNetwork cargarRedNueronal(){
-		return null;
+	
+	public static MultiLayerNetwork cargarRedNueronal() throws IOException{
+		DataInputStream dis = null;
+		
+		JFileChooser jfc= new JFileChooser();
+		FileFilter filtroArquitecturaCNN = new FileNameExtensionFilter("Arquitectua de la Red Neuronal (.json)",  "json");
+		FileFilter filtroPesosCNN = new FileNameExtensionFilter("Pesos de la Red Neuronal (.bin)", "bin");
+		
+		jfc.setAcceptAllFileFilterUsed(false);
+		jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		jfc.setMultiSelectionEnabled(false);
+		
+		try{
+			
+			LOG.info("Cargando la arquitectura de la red neuronal...");
+			MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
+			MultiLayerNetwork redGuardada = new MultiLayerNetwork(confFromJson);
+		    redGuardada.init();
+			LOG.info("Cargando la arquitectura de la red neuronal <ok>");
+			
+			LOG.info("Cargando los pesos de la red neuronal...");
+			dis = new DataInputStream(new FileInputStream("coefficients.bin"));
+		    INDArray newParams = Nd4j.read(dis);
+		    redGuardada.setParameters(newParams);	
+			LOG.info("Cargando los pesos de la red neuronal <ok>");
+			return redGuardada;
+			
+		}catch(IOException ioe){
+			LOG.error("Error de flujo al cargar la red neuronal: "+ioe.getMessage());
+			throw ioe;
+		}catch(Exception e){
+			LOG.error("Error inesperado al cargar la red neuronal: "+e.getMessage());
+			throw e;
+		}
+		finally{
+			try{
+				if(dis != null)
+					dis.close();				
+			}catch(Exception e){
+				LOG.error("Error inesperado: ");
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Funcion que valida que el valor del parametro pathArchivo sea un archivo inexistente
+	 * y si existe el archivo le pregunta al usuario si quiere que este se sobreescriba
+	 * @param pathArchivo : direccion real del archivo que se quiere guardar
+	 * @param extencion : extencion que deberia tener el archivo
+	 * @return El path del archivo con la extencion correctamente concatenada
+	 */
+	public static String validarArchivoAlGuardar(String pathArchivo, String extencion){
+		String pathArchivoConExtencion;
+		
+		if(pathArchivo.endsWith(extencion) && 
+				pathArchivo.lastIndexOf('.') == pathArchivo.indexOf('.'))
+			pathArchivoConExtencion = pathArchivo;
+		else if(!pathArchivo.contains("."))
+			pathArchivoConExtencion = pathArchivo+extencion;
+		else{
+			JOptionPane.showMessageDialog(null, "Nombre incorrecto","",JOptionPane.ERROR_MESSAGE);
+			return null;
+		}
+			
+			
+		File f = new File(pathArchivoConExtencion);
+		int opcionElegidaJP;
+		if(f.exists()){
+			opcionElegidaJP = JOptionPane.showConfirmDialog(null,
+					"El archivo "+f.getName()+" ya existe deseas reemplazarlo",
+					"",
+    				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if(opcionElegidaJP == JOptionPane.YES_OPTION)
+				return pathArchivoConExtencion;
+			
+			return null;
+		}
+		return pathArchivoConExtencion;
 	}
 
 }

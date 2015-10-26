@@ -2,8 +2,10 @@ package com.escom.UTIL;
 
 import static org.junit.Assert.*;
 
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.junit.Test;
 
+import com.escom.CNNS.Redes;
 import com.escom.UTIL.Utileria;
 
 public class UtileriaTest {
@@ -49,5 +51,18 @@ public class UtileriaTest {
 	/**
 	 * Preubas para el metodo 
 	 */
+	@Test
+	public void testGuardarRedNeuronal(){
+		LOG.info("Prueba para guardarRedNeuronal()");
+		try{
+			MultiLayerNetwork model = new MultiLayerNetwork(Redes.getConfiguration2());
+			model.init();
+			Utileria.guardarRedNeuronal(model);
+		
+		}catch(Exception e){
+			e.printStackTrace();
+			fail("Error: "+e.getMessage());
+		}
+	}
 
 }
