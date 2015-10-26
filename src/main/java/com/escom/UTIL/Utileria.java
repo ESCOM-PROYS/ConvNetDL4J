@@ -1,8 +1,22 @@
 package com.escom.UTIL;
 
+import java.awt.FileDialog;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+
+import org.apache.commons.io.FileUtils;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.nd4j.linalg.factory.Nd4j;
 
 public class Utileria {
 	/**
@@ -119,6 +133,62 @@ public class Utileria {
 			LOG.error("Error inesperado: "+ex.getMessage());
 			throw ex;
 		}
+	}
+	
+	/**
+	 * Guarda una carpeta con dos archivos de configuracion de la red nerunal
+	 * el primero guarda los pesos de las neuronas de la red neuronal en un formato .bin, y el 
+	 * segundo guarda la estructura de lared neuronal en un formato .json
+	 * @param model
+	 * @throws IOException 
+	 */
+	public static void guardarRedNeuronal(MultiLayerNetwork model) throws IOException{
+		DataOutputStream dos = null;
+		OutputStream fos= null;
+		JFileChooser jfc= new JFileChooser();
+		JFrame jf = new JFrame();
+		try{
+			LOG.info("Guardando los pesos de las redes neuronales...");
+			jfc.showOpenDialog(jf);
+			fos = Files.newOutputStream(Paths.get("coefficients.bin"));
+		    dos = new DataOutputStream(fos);
+		    dos.flush();
+		    Nd4j.write(model.params(), dos);
+		    LOG.info("Guardando los pesos de las redes neuronales <ok>");
+		    LOG.info("Guardando la arquitectura de la red neuronal...");
+		    FileUtils.write(new File("conf.json"), model.getLayerWiseConfigurations().toJson());
+		    LOG.info("Guardando la arquitectura de la red neuronal <ok>");
+		}catch(IOException ioe){
+			LOG.error("Error al guardar la configuración de la red neuronal: "+ioe.getMessage());
+			throw ioe;
+		}
+		finally{
+			try{
+				if(dos != null){
+				    dos.close();	
+				}
+				if(fos != null){
+					fos.close();
+				}	
+			}catch(Exception e){
+				LOG.error("Error inesperado: ");
+				e.printStackTrace();
+			}
+		}
+	    
+//	    MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
+//	    DataInputStream dis = new DataInputStream(new FileInputStream("coefficients.bin"));
+//	    INDArray newParams = Nd4j.read(dis);
+//	    dis.close();
+//	    MultiLayerNetwork savedNetwork = new MultiLayerNetwork(confFromJson);
+//	    savedNetwork.init();
+//	    savedNetwork.setParameters(newParams);
+//	    System.out.println("Original network params " + model.params());
+//	    System.out.println(savedNetwork.params());
+	}
+	
+	public static MultiLayerNetwork cargarRedNueronal(){
+		return null;
 	}
 
 }
