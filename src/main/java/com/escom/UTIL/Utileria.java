@@ -1,6 +1,5 @@
 package com.escom.UTIL;
 
-import java.awt.FileDialog;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -14,11 +13,9 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.plaf.FileChooserUI;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -144,7 +141,7 @@ public class Utileria {
 	}
 	
 	/**
-	 * Guarda una carpeta con dos archivos de configuracion de la red nerunal
+	 * Guarda una dos archivos de configuracion de la red nerunal
 	 * el primero guarda los pesos de las neuronas de la red neuronal en un formato .bin, y el 
 	 * segundo guarda la estructura de lared neuronal en un formato .json
 	 * @param model
@@ -250,6 +247,11 @@ public class Utileria {
 	}
 	
 	
+	/**
+	 * Crea una red neuronal con la configuracion de los archivos que se eligen
+	 * @return
+	 * @throws IOException
+	 */
 	public static MultiLayerNetwork cargarRedNueronal() throws IOException{
 		DataInputStream dis = null;
 		
@@ -261,19 +263,37 @@ public class Utileria {
 		jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		jfc.setMultiSelectionEnabled(false);
 		
+		int opcionElegidaFC;
+		
 		try{
+			jfc.setFileFilter(filtroArquitecturaCNN);
+			opcionElegidaFC = jfc.showOpenDialog(null);
+			
+			if(opcionElegidaFC == JFileChooser.CANCEL_OPTION)
+				return null;
 			
 			LOG.info("Cargando la arquitectura de la red neuronal...");
-			MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
+			MultiLayerConfiguration confFromJson = 
+					MultiLayerConfiguration.fromJson(FileUtils.readFileToString(jfc.getSelectedFile()));
+			
 			MultiLayerNetwork redGuardada = new MultiLayerNetwork(confFromJson);
-		    redGuardada.init();
+			redGuardada.init();
+			
 			LOG.info("Cargando la arquitectura de la red neuronal <ok>");
 			
-			LOG.info("Cargando los pesos de la red neuronal...");
-			dis = new DataInputStream(new FileInputStream("coefficients.bin"));
-		    INDArray newParams = Nd4j.read(dis);
-		    redGuardada.setParameters(newParams);	
-			LOG.info("Cargando los pesos de la red neuronal <ok>");
+			jfc.setFileFilter(filtroPesosCNN);
+			opcionElegidaFC = jfc.showOpenDialog(null);
+			
+			INDArray newParams = null;
+			
+			if(opcionElegidaFC == JFileChooser.APPROVE_OPTION){
+				LOG.info("Cargando los pesos de la red neuronal...");
+				dis = new DataInputStream(new FileInputStream(jfc.getSelectedFile().getAbsolutePath()));
+			    newParams = Nd4j.read(dis);
+			    redGuardada.setParameters(newParams);
+				LOG.info("Cargando los pesos de la red neuronal <ok>");
+			}
+				
 			return redGuardada;
 			
 		}catch(IOException ioe){

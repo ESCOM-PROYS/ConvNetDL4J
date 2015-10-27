@@ -47,18 +47,34 @@ public class UtileriaTest {
 		}
 		
 	}
+//	
+//	/**
+//	 * Preubas para el metodo testGuardarRedNeuronal()
+//	 */
+//	@Test
+//	public void testGuardarRedNeuronal(){
+//		LOG.info("Prueba para guardarRedNeuronal()");
+//		try{
+//			MultiLayerNetwork model = new MultiLayerNetwork(Redes.getConfiguration2());
+//			model.init();
+//			Utileria.guardarRedNeuronal(model);
+//		
+//		}catch(Exception e){
+//			e.printStackTrace();
+//			fail("Error: "+e.getMessage());
+//		}
+//	}
 	
 	/**
-	 * Preubas para el metodo 
+	 * Preubas para el metodo cargarRedNueronal()
 	 */
 	@Test
-	public void testGuardarRedNeuronal(){
-		LOG.info("Prueba para guardarRedNeuronal()");
+	public void testCargarRedNueronal(){
+		LOG.info("Prueba para cargarRedNueronal()");
 		try{
-			MultiLayerNetwork model = new MultiLayerNetwork(Redes.getConfiguration2());
-			model.init();
-			Utileria.guardarRedNeuronal(model);
-		
+			MultiLayerNetwork model = Utileria.cargarRedNueronal();
+			if(model != null)
+				Utileria.guardarRedNeuronal(model);
 		}catch(Exception e){
 			e.printStackTrace();
 			fail("Error: "+e.getMessage());
