@@ -3,6 +3,8 @@ package com.escom.LOADER;
 import java.io.File;
 import java.io.IOException;
 
+import javax.management.InstanceNotFoundException;
+
 import org.canova.api.io.WritableConverter;
 import org.canova.api.io.converters.WritableConverterException;
 import org.canova.api.io.data.IntWritable;
@@ -31,10 +33,10 @@ public class LoaderCsv {
 	 * @throws IOException: Cuando no se puede encontrar los recursos a leer
 	 * @throws InterruptedException: Cuando ocurre un error al leer los recursos, un hilo fue interrumpido
 	 */
-	public static DataSetIterator loadData() throws IOException, InterruptedException{		
+	public static DataSetIterator loadData1() throws IOException, InterruptedException{		
 		try {
 			LOG.info("Leyendo Imagnes...");
-			RecordReader imageReader = new ImageRecordReader(Utileria.WIDTH, Utileria.HEIGHT, false);
+			RecordReader imageReader = new ImageRecordReader(Utileria.WIDTH, Utileria.HEIGHT, Utileria.N_CANALES, false);
 			imageReader.initialize(new FileSplit(new File(Utileria.DIR_IMGS_ENTR)));
 			LOG.info("Leyendo Imagnes <ok>");
 			LOG.info("Leyendo Etiquetas...");
@@ -43,26 +45,36 @@ public class LoaderCsv {
 			LOG.info("Leyendo Etiquetas <ok>");
 
 			RecordReader recordReader =  new ComposableRecordReader(imageReader, labelsReader);
-
-			// Se sobreescribe convert para sustituir la etiqueta de la imagen por su 
-			//indice en la lista de etiquetas:  frog -> 6
+			
 			DataSetIterator dataSetIterator = new RecordReaderDataSetIterator(recordReader, new WritableConverter() {
 				@Override
 				public Writable convert(Writable writable) throws WritableConverterException {
-					if (writable instanceof Text) {
-						String label = writable.toString().replaceAll("\u0000", "");
-						int index = Utileria.ETIQUETAS.indexOf(label);
-						return new IntWritable(index);
-					}else{
-						System.out.println("ERROR: No es una instancia de Text. [dataSetIterator]");
+					try{
+						if (writable instanceof Text) {
+							String label = writable.toString().replaceAll("\u0000", "");
+							int index = Utileria.ETIQUETAS.indexOf(label);
+							return new IntWritable(index);
+						}else{
+							throw new InstanceNotFoundException("ERROR: No es una instancia de Text. [dataSetIterator]");
+						}
+						
+					}catch(InstanceNotFoundException infe){
+						LOG.error("Tratando de convertir algo que no es texto: "+infe.getMessage());
+						infe.printStackTrace();
+					}
+					catch(Exception e){
+						LOG.error("Error inesperado: "+e.getMessage());
+						e.printStackTrace();
 					}
 					return writable;
 				}
-			}, Utileria.TAM_LOTE, 1024, 10);
+			}, Utileria.TAM_LOTE, Utileria.HEIGHT*Utileria.WIDTH*Utileria.N_CANALES, 10);
 			
 			if(!dataSetIterator.hasNext())
 				throw(new InterruptedException("Error: dataSet vacio"));
-			
+
+			// Se sobreescribe convert para sustituir la etiqueta de la imagen por su 
+			//indice en la lista de etiquetas:  frog -> 6
 			return dataSetIterator;
 			
 		} catch (IOException ioe) {

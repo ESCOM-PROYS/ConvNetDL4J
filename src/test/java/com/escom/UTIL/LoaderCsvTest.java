@@ -20,7 +20,7 @@ public class LoaderCsvTest {
 	public void test() {
 		LOG.info("Pruebas loadData()");
 		try{
-			LoaderCsv.loadData();
+			LoaderCsv.loadData1();
 		}catch(Exception e){
 			fail("Error: "+e.getMessage());
 		}

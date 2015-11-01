@@ -95,13 +95,13 @@ public class Redes {
 		
 		MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
                 .seed(Utileria.SEMILLA)
-                .batchSize(500)
-                .iterations(10)
+                .batchSize(Utileria.TAM_LOTE)
+                .iterations(Utileria.ITERACIONES)
                 .constrainGradientToUnitNorm(true)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list(3)
                 .layer(0, new ConvolutionLayer.Builder(10, 10)
-                        .nIn(3)
+                        .nIn(Utileria.N_CANALES)
                         .nOut(6).stride(new int[]{1, 1})
                         .weightInit(WeightInit.VI)
                         .activation("relu")
@@ -115,7 +115,7 @@ public class Redes {
                         .build())
                 .backprop(true).pretrain(false);
 
-        new ConvolutionLayerSetup(builder,32,32,1);
+        new ConvolutionLayerSetup(builder,Utileria.HEIGHT, Utileria.WIDTH, Utileria.N_CANALES);
 
         return builder.build();
 		
